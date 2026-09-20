@@ -4,7 +4,7 @@ API REST desenvolvida em Java 25 para consultar os profissionais de uma clínica
 O sistema lê os dados de um arquivo JSON local e disponibiliza as informações
 por HTTP em formato JSON.
 
-Este projeto foi feito em Java puro, sem Spring Boot e sem banco de dados. O
+Este projeto foi feito em Java. O
 servidor HTTP utiliza `com.sun.net.httpserver.HttpServer`, e o Jackson é usado
 para ler o arquivo JSON e serializar as respostas da API.
 
@@ -66,8 +66,6 @@ run/run.sh
 
 O script compila o projeto, executa os testes, gera o JAR executável e inicia a
 API na porta `8080`.
-
-```
 
 Para parar a aplicação, pressione `Ctrl+C` no terminal onde ela está rodando.
 
