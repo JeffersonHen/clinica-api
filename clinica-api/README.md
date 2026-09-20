@@ -1,54 +1,134 @@
-# API Clinica de Saude
+# API de Profissionais de Saúde
 
-API REST em Java puro para consulta de profissionais de saude. O servidor HTTP usa `HttpServer` do JDK, os dados sao lidos de um arquivo JSON local e o Jackson faz a conversao entre objetos Java e JSON.
+API REST desenvolvida em Java 25 para consultar os profissionais de uma clínica.
+O sistema lê os dados de um arquivo JSON local e disponibiliza as informações
+por HTTP em formato JSON.
+
+Este projeto foi feito em Java puro, sem Spring Boot e sem banco de dados. O
+servidor HTTP utiliza `com.sun.net.httpserver.HttpServer`, e o Jackson é usado
+para ler o arquivo JSON e serializar as respostas da API.
+
+## O que a API faz
+
+- Lista todos os profissionais cadastrados.
+- Lista as especialidades disponíveis, sem duplicação.
+- Busca profissionais por nome, aceitando busca parcial.
+- Filtra profissionais por especialidade.
+- Combina os filtros de nome e especialidade.
+- Informa se cada profissional está disponível.
+- Retorna mensagens JSON quando uma busca não encontra resultados.
+- Disponibiliza uma interface Swagger para testar os endpoints pelo navegador.
 
 ## Tecnologias
 
 - Java 25
-- `com.sun.net.httpserver.HttpServer`
-- Jackson
 - Maven
+- `HttpServer` do JDK
+- Jackson Databind
+- JUnit 5
 - JSON
+
+## Dados
+
+Os profissionais ficam em:
+
+```text
+src/main/resources/data/profissionais.json
+```
+
+Cada registro possui:
+
+```json
+{
+  "id": 1,
+  "nome": "Dr. Carlos Silva",
+  "especialidade": "Cardiologia",
+  "disponivel": true
+}
+```
+
+Não há persistência em banco de dados. Para alterar os profissionais, basta
+editar o arquivo JSON e reiniciar a aplicação.
 
 ## Como executar
 
-Requer Java 25 e Maven instalados.
+Requisitos:
+
+- Java 25
+- Maven
+
+Execute o script padrão:
 
 ```bash
-cd clinica-api
-./run/run.sh
+chmod +x ./run/run.sh
+run/run.sh
 ```
 
-A aplicacao inicia em `http://localhost:8080`.
+O script compila o projeto, executa os testes, gera o JAR executável e inicia a
+API na porta `8080`.
 
-O script executa `mvn package` e inicia o JAR executavel. Como ele calcula a raiz do projeto sozinho, tambem pode ser chamado por caminho absoluto a partir de outra pasta:
-
-```bash
-/home/jeffe/projetos/clinica-api/run/run.sh
 ```
 
-## Endpoints
+Para parar a aplicação, pressione `Ctrl+C` no terminal onde ela está rodando.
 
-| Metodo | Rota | Descricao |
+## Endpoints da API
+
+| Método | Rota | Descrição |
 | --- | --- | --- |
-| GET | `/` | Mostra os endpoints disponiveis. |
-| GET | `/api-docs` | Abre a interface Swagger UI padrão para testar a API. |
-| GET | `/swagger` | Alias da interface Swagger UI. |
-| GET | `/openapi.json` | Retorna a especificacao OpenAPI. |
-| GET | `/api/profissionais` | Lista todos os profissionais. |
-| GET | `/api/profissionais/todos` | Lista todos os profissionais explicitamente, sem filtros. |
-| GET | `/api/profissionais?nome=Carlos` | Busca parcial por nome, sem diferenciar maiusculas e minusculas. |
-| GET | `/api/profissionais?especialidade=Cardiologia` | Filtra por especialidade. |
-| GET | `/api/profissionais?nome=Carlos&especialidade=Cardiologia` | Aplica os dois filtros. |
-| GET | `/api/especialidades` | Lista especialidades sem duplicacao. |
+| GET | `/` | Verifica se a API está online e mostra os principais links. |
+| GET | `/api/profissionais` | Lista ou filtra profissionais. |
+| GET | `/api/profissionais/todos` | Lista explicitamente todos os profissionais, sem filtros. |
+| GET | `/api/especialidades` | Lista as especialidades disponíveis sem repetição. |
+| GET | `/api-docs` | Abre o Swagger UI para testar a API. |
+| GET | `/swagger` | Alias do Swagger UI. |
+| GET | `/openapi.json` | Retorna a especificação OpenAPI em JSON. |
 
-Cada profissional possui `id`, `nome`, `especialidade` e `disponivel`.
+### Exemplos de consultas
 
-O projeto nao utiliza Spring, banco de dados, Docker ou autenticacao. As dependencias sao gerenciadas diretamente pelo Maven.
+Listar todos sem filtros:
 
-Para testar pelo Swagger, inicie a API e acesse [http://localhost:8080/api-docs](http://localhost:8080/api-docs). A pagina usa a especificacao local em `/openapi.json`.
+```http
+GET http://localhost:8080/api/profissionais/todos
+```
 
-Quando uma busca com filtro nao encontra resultados, a API retorna HTTP 404 e uma resposta como:
+Buscar pelo nome, ignorando maiúsculas e minúsculas:
+
+```http
+GET http://localhost:8080/api/profissionais?nome=Carlos
+```
+
+Filtrar por especialidade:
+
+```http
+GET http://localhost:8080/api/profissionais?especialidade=Cardiologia
+```
+
+Combinar nome e especialidade:
+
+```http
+GET http://localhost:8080/api/profissionais?nome=Carlos&especialidade=Cardiologia
+```
+
+Listar especialidades:
+
+```http
+GET http://localhost:8080/api/especialidades
+```
+
+## Exemplo de resposta
+
+```json
+[
+  {
+    "id": 1,
+    "nome": "Dr. Carlos Silva",
+    "especialidade": "Cardiologia",
+    "disponivel": true
+  }
+]
+```
+
+Quando uma busca com filtro não encontra resultados, a API retorna HTTP `404`:
 
 ```json
 {
@@ -56,15 +136,62 @@ Quando uma busca com filtro nao encontra resultados, a API retorna HTTP 404 e um
 }
 ```
 
+Para uma especialidade inexistente, a mensagem é:
+
+```json
+{
+  "mensagem": "Nenhum profissional encontrado para a especialidade informada."
+}
+```
+
+## Swagger
+
+Com a API em execução, abra:
+
+```text
+http://localhost:8080/api-docs
+```
+
+O Swagger permite visualizar os endpoints, informar parâmetros de consulta e
+executar as requisições usando o botão `Try it out`.
+
+## Arquitetura
+
+O fluxo de uma requisição é:
+
+```text
+Cliente HTTP ou Swagger
+          ↓
+HttpServer
+          ↓
+Controller
+          ↓
+Service
+          ↓
+Repository
+          ↓
+profissionais.json
+```
+
 ## Testes
+
+Execute os testes com:
 
 ```bash
 mvn test
 ```
 
-## Estrutura
+O projeto possui testes para:
 
-- `model`: representa os profissionais.
-- `repository`: le `src/main/resources/data/profissionais.json` com Jackson.
-- `service`: aplica os filtros e lista especialidades.
-- `controller`: implementa os handlers HTTP do JDK.
+- Listagem completa.
+- Busca por nome.
+- Filtro por especialidade.
+- Filtros combinados.
+- Listagem sem duplicação de especialidades.
+- Busca sem resultados.
+
+## Decisões do projeto
+
+O projeto não utiliza Spring Boot, banco de dados, Docker, autenticação ou
+frontend separado. Essa escolha mantém a aplicação pequena e alinhada ao
+objetivo de consultar profissionais armazenados em um JSON local.

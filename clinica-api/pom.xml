@@ -6,7 +6,7 @@
 
     <groupId>br.com.clinica</groupId>
     <artifactId>clinica-api</artifactId>
-    <version>1.1.1-SNAPSHOT</version>
+    <version>1.1.2-SNAPSHOT</version>
     <name>clinica-api</name>
     <description>API para consulta de profissionais de saude</description>
 
